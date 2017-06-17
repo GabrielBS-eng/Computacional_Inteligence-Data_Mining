@@ -3,15 +3,12 @@
 #include <time.h>
 #include <math.h>
 
-#include "criacao-da-populacao.h"
+//#include "criacao-da-populacao.h"
 
 #define INSTANCES 366 - 8
 #define ATRIBUTES 35
-#define CLASS_TO_ANALISE 1
+#define CLASS_TO_ANALISE 6
 #define WEIGHT_LIMIT 0.7
-
-#define DATA_TRAINING 0.6667
-#define DATA_TESTING 0.3333
 
 //operador 0 => Igual
 //operador 1 => Diferente
@@ -29,6 +26,7 @@ typedef struct individuo
     float fitness;
 }individuo;
 
+struct individuo melhores[10];
 struct individuo populacao[50];
 struct individuo populacaoFilhos[50];
 
@@ -39,40 +37,52 @@ void get_database(int total_data[][ATRIBUTES]);
 // |-------------------------------------------------------------
 void criaPopulacao(int tamanho);
 void imprime();
-void imprimeIndividuo(individuo qualquer);
 void crossover(int p1,int p2,int indiceCross);
 void mutacao(int ind);
 void ordena(int popCase);
 void elitismoP();
 
+int  roleta()
+{
+    int i,maior,vetor[50],sum=0,sorteio;
+    vetor[0]=populacao[0].fitness*100; //tratar o problema de acumular float
+    for(i=1; i<50; i++)
+    {
+    if(populacao[i].fitness*100 > 0)
+    vetor[i]=(populacao[i].fitness*100)+vetor[i-1];
+    else vetor[i]=vetor[i-1]+1;
+    } //cria um vetor com a fitness acumulado
+    sorteio=rand()%vetor[49];
+    for(i=0; i<50;i++)if(vetor[i]>=sorteio){break;}
+    return i;
+}
+
+int torneio_estocastico(int tour)
+{
+    int i,torneio[tour],maior;
+    for(i=0; i<tour; i++)torneio[i]=roleta();
+    for(i=1,maior=torneio[0]; i<tour; i++)if(populacao[maior].fitness<populacao[torneio[i]].fitness)maior=torneio[i];
+    return maior;
+}
+
+
+
+
 void ordena(int popCase)
 {
-    int i,j,menor;
+    int i,j,maior;
     individuo aux;
     for(i=0;i<50;i++)
     {
-        menor=i;
+        maior=i;
         for(j=i;j<50;j++)
         {
-            if(popCase==1)// ordena a populacao
-            {
-            if(populacao[j].fitness<populacao[menor].fitness)
-                {aux=populacao[j];
-                populacao[j]=populacao[menor];
-                populacao[menor]=aux;
-                menor=j;
-                }
-            }
-            else // ordena a populacao gerada por crossover
-            {
-            if(populacaoFilhos[j].fitness<populacaoFilhos[menor].fitness)
-                {aux=populacaoFilhos[j];
-                populacaoFilhos[j]=populacaoFilhos[menor];
-                populacaoFilhos[menor]=aux;
-                menor=j;
-                }
-            }
+            if(populacao[j].fitness>populacao[maior].fitness) maior=j;
+
         }
+        aux=populacao[i];
+        populacao[i]=populacao[maior];
+        populacao[maior]=aux;
     }
 }
 
@@ -83,14 +93,14 @@ void criaPopulacao(int tamanho)
     {
         for(i=0;i<35;i++)
         {
-            //peso de ativa�ao com 3 casas decimais entre 0 e 1.
+            //peso de ativacao com 3 casas decimais entre 0 e 1.
             populacao[x].fita[i].peso=(rand()%1000)/1000.0;
+            populacao[x].fita[i].valor=rand()%3;
             if(i!=10)
                 populacao[x].fita[i].operador=rand()%4; //campo operador dos genes.
             else
                 populacao[x].fita[i].operador=rand()%2; //campo operador do gene historico familiar.
 
-            populacao[x].fita[i].valor=rand()%4;
             if(i==10)populacao[x].fita[i].valor=rand()%2; //historico familiar � binario.
             if(i==33)populacao[x].fita[i].valor=rand()%76+1; //gene idade.
             if(i==34)
@@ -105,72 +115,13 @@ void criaPopulacao(int tamanho)
     }
 }
 
-void imprimeIndividuo(individuo qualquer)
-{
-  for(int i=0;i<35;i++)
-  {
-    if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
-    {
-      // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
-      printf("gen%d ",i); //indica o gene.
-      if(qualquer.fita[i].operador==0)
-        printf("== %d ",qualquer.fita[i].valor);
-      if(qualquer.fita[i].operador==1)
-        printf("!= %d ",qualquer.fita[i].valor);
-      if(qualquer.fita[i].operador==2)
-        printf(">= %d ",qualquer.fita[i].valor);
-      if(qualquer.fita[i].operador==3)
-        printf("< %d ",qualquer.fita[i].valor);
-      //printf(" and ");
-    }
-  }
-  printf("\t%f", qualquer.fitness);
-}
-
-void imprime()
-{
-    int x,i, jump=0;
-    for(x=0;x<50;x++)
-    {
-        for(i=0;i<35;i++)
-        {
-            if(populacao[x].fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
-            {
-              jump = 1;
-              // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
-              printf("gen%d ",i); //indica o gene.
-              if(populacao[x].fita[i].operador==0)
-                printf("== %d ",populacao[x].fita[i].valor);
-              if(populacao[x].fita[i].operador==1)
-                printf("!= %d ",populacao[x].fita[i].valor);
-              if(populacao[x].fita[i].operador==2)
-                printf(">= %d ",populacao[x].fita[i].valor);
-              if(populacao[x].fita[i].operador==3)
-                printf("< %d ",populacao[x].fita[i].valor);
-              //printf(" and ");
-            }
-            // if(populacao[x].fita[i].peso  WEIGHT_LIMIT)
-            // {
-            //   printf("\n");
-            //   printf("\n-----------------------------\n");
-            // }
-        }
-      if(jump==1)
-      {
-        printf("\t%f", populacao[x].fitness);
-        printf("\n");
-      }
-      jump=0;
-    }
-}
-
 void crossover(int p1,int p2,int indiceCross)
 {
     individuo f1,f2;
     int a,b,i;
-    a=rand()%34;+1;
-    b=rand()%(34-a);
-    for(i=0;i<34;i++)
+   a=(rand()%35);
+    b=rand()%(35-a);
+    for(i=0;i<35;i++)
     {
         if(i<a)
         {
@@ -209,7 +160,7 @@ void mutacao(int ind)
             if(k==0)
             populacaoFilhos[ind].fita[i].peso-=(rand()%10000)/10000.0;
             else
-                populacaoFilhos[ind].fita[i].peso+=(rand()%10000)/10000.0;
+            populacaoFilhos[ind].fita[i].peso+=(rand()%10000)/10000.0;
             if(populacaoFilhos[ind].fita[i].peso<0)populacaoFilhos[ind].fita[i].peso=0;
             if(populacaoFilhos[ind].fita[i].peso>1)populacaoFilhos[ind].fita[i].peso=1;
         }
@@ -220,7 +171,7 @@ void mutacao(int ind)
             }
         if(rand()%100<30)
         {
-                if(i==34)
+                if(i==33)
                 {
                  populacaoFilhos[ind].fita[i].valor=rand()%76+1;
                 }
@@ -230,6 +181,7 @@ void mutacao(int ind)
                 }
         }
     }
+    populacaoFilhos[ind].fita[34].peso=1;
 }
 
  void elitismoP() // elitismo com apenas o melhor
@@ -240,17 +192,42 @@ void mutacao(int ind)
  }
 //|-------------------------------------------------------------------------------
 
+void imprimeIndividuo(individuo qualquer)
+{
+    int i;
+    if(qualquer.fitness>0){
+    for(i=0;i<35;i++)
+    {
+        if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
+        {
+        // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
+        printf("g%d ",i); //indica o gene.
+        if(qualquer.fita[i].operador==0)
+            printf("== %d ",qualquer.fita[i].valor);
+        if(qualquer.fita[i].operador==1)
+            printf("!= %d ",qualquer.fita[i].valor);
+        if(qualquer.fita[i].operador==2)
+            printf(">= %d ",qualquer.fita[i].valor);
+        if(qualquer.fita[i].operador==3)
+            printf("< %d ",qualquer.fita[i].valor);
+        }
+    }
+  printf("<%f>\n", qualquer.fitness);
+    }
+}
+
+
 void executaBasePopulacao(int total_data[][ATRIBUTES])
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
-  int triggered;
-  for(int i=0; i<50; i++) //Para cada individuo
+  int triggered,p,q,i;
+  for(i=0; i<50; i++) //Para cada individuo
   {
-    for(int p=0; p<INSTANCES; p++) //Comparar com cada registro de caso clínico
+    for(p=0; p<INSTANCES; p++) //Comparar com cada registro de caso clínico
     {
       triggered = 1;
-      for(int q=0; (triggered)&&(q<ATRIBUTES-1); q++) //Para cada atributo (sem a classe)
+      for(q=0; (triggered)&&(q<ATRIBUTES-1); q++) //Para cada atributo (sem a classe)
       {
         if(populacao[i].fita[q].peso > WEIGHT_LIMIT) //O peso é maior que o limite
         {
@@ -273,32 +250,27 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
           }
         }
       }
-      if(triggered) //Análise caso a regra foi desobedecida em algum ponto
+
+
+      if(triggered) //Análise caso a regra deu certo
       {
         if(total_data[p][34] == CLASS_TO_ANALISE) Tp++; //Regra cumprida e  classe bateu (Verdadeiro positivo)
         else Fp++; //Regra cumprida, mas classe não bateu (Falso positivo)
       }
-      else //Análise caso a regra deu certo
+      else //Análise caso a regra foi desobedecida em algum ponto
       {
         if(total_data[p][34] != CLASS_TO_ANALISE) Tn++; //Regra desobedecida e classe não bateu (Verdadeiro negativo)
         else Fn++; //Regra desobedecida, mas classe bateu (Falso negativo)
       }
     }
-    printf("\nIndivid %d ",i);
-    imprimeIndividuo(populacao[i]);
-    printf("\nTp: %d ",Tp);
-    printf("Fp: %d ",Fp);
-    printf("Tn: %d ",Tn);
-    printf("Fn: %d ",Fn);
-    Se = (float) (Tp/(Tp+Fn));
-    Sp = (float) (Tn/(Tn+Fp));
+    Se = (Tp/(Tp+Fn*1.0));
+    Sp = (Tn/(Tn+Fp*1.0));
     populacao[i].fitness = Se*Sp;
     Tp = 0; //para começar a análise da próxima regra (indivíduo)
     Fp = 0; //para começar a análise da próxima regra (indivíduo)
     Tn = 0; //para começar a análise da próxima regra (indivíduo)
     Fn = 0; //para começar a análise da próxima regra (indivíduo)
   }
-  getchar();
 }
 
 void executaBaseIndividuo()
@@ -336,6 +308,7 @@ void get_database(int total_data[][ATRIBUTES]) //coleta dos dados do arquivo
 
 int main()
 {
+
   clock_t begin = clock();
   clock_t end;
   double time_spent;
@@ -361,38 +334,38 @@ int main()
     srand(execucao);
     execucao++;
   }
-
   get_database(total_data);
 
   while(execucao<10)
   {
-    printf("\nEXEC%d: \n", execucao);
-      if(gotTheFile) srand(execucao);
+   // printf("\nEXEC%d: \n", execucao);
+      if(!gotTheFile) srand(execucao);
       geracao=0;
       criaPopulacao(50);
       executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
-      ordena(2);
-      // imprime();
-      // getchar();
+      ordena(1);
     while(geracao<50)
     {
       for(indiceCross=0;indiceCross<50;indiceCross+=2)
       {
-        /*
-        int pai1=torneio estocastico();
-        int pai2=torneio estocastico();
-        crossover(p1,p2,indiceCross);
-        */
+        int pai1=torneio_estocastico(3);
+        int pai2=torneio_estocastico(3);
+        crossover(pai1,pai2,indiceCross);
       }
-      ordena(2);
-      // elitismoP();
+      elitismoP();
+      executaBasePopulacao(total_data);
       ordena(1);
-      // executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
-      // imprime();
+//     for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
       geracao++;
+
     }
+    //for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
+    melhores[execucao]=populacao[0];// parte 4 do trabalho
     execucao++;
   }
+
+  printf("melhores:\n");
+  for(i=0;i<10;i++)imprimeIndividuo(melhores[i]);
   end = clock();
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("\n\nTime: %lf\n",time_spent);
