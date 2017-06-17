@@ -81,12 +81,12 @@ void criaPopulacao(int tamanho)
         {
             //peso de ativa�ao com 3 casas decimais entre 0 e 1.
             populacao[x].fita[i].peso=(rand()%1000)/1000.0;
-
             if(i!=10)
                 populacao[x].fita[i].operador=rand()%4; //campo operador dos genes.
             else
                 populacao[x].fita[i].operador=rand()%2; //campo operador do gene historico familiar.
 
+            populacao[x].fita[i].valor=rand()%4;
             if(i==10)populacao[x].fita[i].valor=rand()%2; //historico familiar � binario.
             if(i==33)populacao[x].fita[i].valor=rand()%76+1; //gene idade.
             if(i==34)
@@ -110,7 +110,7 @@ void imprime()
             if(populacao[x].fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
             {
               jump = 1;
-              //printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
+              // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
               printf("gen%d ",i); //indica o gene.
               if(populacao[x].fita[i].operador==0)
                 printf("== %d ",populacao[x].fita[i].valor);
@@ -128,7 +128,11 @@ void imprime()
             //   printf("\n-----------------------------\n");
             // }
         }
-      if(jump==1) printf("\n");
+      if(jump==1)
+      {
+        printf("\t%f", populacao[x].fitness);
+        printf("\n");
+      }
       jump=0;
     }
 }
@@ -259,8 +263,13 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
       good = 0; //para recomeçar a análise da regra para outro registro
       bad = 0; //para recomeçar a análise da regra para outro registro
     }
-    Se = Tp/(Tp+Fn);
-    Sp = Tn/(Tn+Fp);
+    printf("\nTp: %d ",Tp);
+    printf("Fp: %d ",Fp);
+    printf("Tn: %d ",Tn);
+    printf("Fn: %d ",Fn);
+    getchar();
+    Se = (float) (Tp/(Tp+Fn));
+    Sp = (float) (Tn/(Tn+Fp));
     populacao[i].fitness = Se*Sp;
     Tp = 0; //para começar a análise da próxima regra (indivíduo)
     Fp = 0; //para começar a análise da próxima regra (indivíduo)
@@ -352,9 +361,9 @@ int main()
         */
       }
       ordena(2);
-      elitismoP();
+      // elitismoP();
       ordena(1);
-      //executaBase(); // vai executar a base e calcular o fitness
+      // executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
       imprime();
       geracao++;
     }
