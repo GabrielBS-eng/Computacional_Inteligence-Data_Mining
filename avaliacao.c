@@ -10,6 +10,9 @@
 #define CLASS_TO_ANALISE 1
 #define WEIGHT_LIMIT 0.7
 
+#define DATA_TRAINING 0.6667
+#define DATA_TESTING 0.3333
+
 //operador 0 => Igual
 //operador 1 => Diferente
 //operador 2 => Maior ou Igual
@@ -36,6 +39,7 @@ void get_database(int total_data[][ATRIBUTES]);
 // |-------------------------------------------------------------
 void criaPopulacao(int tamanho);
 void imprime();
+void imprimeIndividuo(individuo qualquer);
 void crossover(int p1,int p2,int indiceCross);
 void mutacao(int ind);
 void ordena(int popCase);
@@ -93,11 +97,34 @@ void criaPopulacao(int tamanho)
             {
                 populacao[x].fita[i].peso=1;
                 populacao[x].fita[i].operador=0;
-                populacao[x].fita[i].valor=(rand()%6)+1; //gene que contem o tipo.
+                populacao[x].fita[i].valor=CLASS_TO_ANALISE;
+                // populacao[x].fita[i].valor=(rand()%6)+1; //gene que contem o tipo.
             }
         }
         x++;
     }
+}
+
+void imprimeIndividuo(individuo qualquer)
+{
+  for(int i=0;i<35;i++)
+  {
+    if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
+    {
+      // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
+      printf("gen%d ",i); //indica o gene.
+      if(qualquer.fita[i].operador==0)
+        printf("== %d ",qualquer.fita[i].valor);
+      if(qualquer.fita[i].operador==1)
+        printf("!= %d ",qualquer.fita[i].valor);
+      if(qualquer.fita[i].operador==2)
+        printf(">= %d ",qualquer.fita[i].valor);
+      if(qualquer.fita[i].operador==3)
+        printf("< %d ",qualquer.fita[i].valor);
+      //printf(" and ");
+    }
+  }
+  printf("\t%f", qualquer.fitness);
 }
 
 void imprime()
@@ -217,57 +244,52 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
-  int good = 0, bad = 0;
-
+  int triggered;
   for(int i=0; i<50; i++) //Para cada individuo
   {
     for(int p=0; p<INSTANCES; p++) //Comparar com cada registro de caso clínico
     {
-      for(int q=0; q<ATRIBUTES-1; q++) //Para cada atributo (sem a classe)
+      triggered = 1;
+      for(int q=0; (triggered)&&(q<ATRIBUTES-1); q++) //Para cada atributo (sem a classe)
       {
-        if(populacao[i].fita[q].peso >= WEIGHT_LIMIT) //O peso é maior que o limite
+        if(populacao[i].fita[q].peso > WEIGHT_LIMIT) //O peso é maior que o limite
         {
           switch (populacao[i].fita[q].operador) //análise do operador
           {
             case 0:
-              if(total_data[p][q] = populacao[i].fita[q].valor) good++;
-              else bad++;
+              if(!(total_data[p][q] == populacao[i].fita[q].valor)) triggered=0;
               break;
             case 1:
-              if(total_data[p][q] != populacao[i].fita[q].valor) good++;
-              else bad++;
+              if(!(total_data[p][q] != populacao[i].fita[q].valor)) triggered=0;
               break;
             case 2:
-              if(total_data[p][q] >= populacao[i].fita[q].valor) good++;
-              else bad++;
+              if(!(total_data[p][q] >= populacao[i].fita[q].valor)) triggered=0;
               break;
             case 3:
-              if(total_data[p][q] < populacao[i].fita[q].valor) good++;
-              else bad++;
+              if(!(total_data[p][q] < populacao[i].fita[q].valor)) triggered=0;
               break;
             default:
               break;
           }
         }
       }
-      if(bad != 0) //Análise caso a regra foi desobedecida em algum ponto
+      if(triggered) //Análise caso a regra foi desobedecida em algum ponto
+      {
+        if(total_data[p][34] == CLASS_TO_ANALISE) Tp++; //Regra cumprida e  classe bateu (Verdadeiro positivo)
+        else Fp++; //Regra cumprida, mas classe não bateu (Falso positivo)
+      }
+      else //Análise caso a regra deu certo
       {
         if(total_data[p][34] != CLASS_TO_ANALISE) Tn++; //Regra desobedecida e classe não bateu (Verdadeiro negativo)
         else Fn++; //Regra desobedecida, mas classe bateu (Falso negativo)
       }
-      else //Análise caso a regra deu certo
-      {
-        if(total_data[p][34] == CLASS_TO_ANALISE) Tp++; //Regra cumprida e classe bateu (Verdadeiro positivo)
-        else Fp++; //Regra cumprida, mas classe não bateu (Falso positivo)
-      }
-      good = 0; //para recomeçar a análise da regra para outro registro
-      bad = 0; //para recomeçar a análise da regra para outro registro
     }
+    printf("\nIndivid %d ",i);
+    imprimeIndividuo(populacao[i]);
     printf("\nTp: %d ",Tp);
     printf("Fp: %d ",Fp);
     printf("Tn: %d ",Tn);
     printf("Fn: %d ",Fn);
-    getchar();
     Se = (float) (Tp/(Tp+Fn));
     Sp = (float) (Tn/(Tn+Fp));
     populacao[i].fitness = Se*Sp;
@@ -276,6 +298,7 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
     Tn = 0; //para começar a análise da próxima regra (indivíduo)
     Fn = 0; //para começar a análise da próxima regra (indivíduo)
   }
+  getchar();
 }
 
 void executaBaseIndividuo()
@@ -344,12 +367,13 @@ int main()
   while(execucao<10)
   {
     printf("\nEXEC%d: \n", execucao);
-      if(!gotTheFile) srand(execucao);
+      if(gotTheFile) srand(execucao);
       geracao=0;
       criaPopulacao(50);
       executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
       ordena(2);
-      imprime();
+      // imprime();
+      // getchar();
     while(geracao<50)
     {
       for(indiceCross=0;indiceCross<50;indiceCross+=2)
@@ -364,7 +388,7 @@ int main()
       // elitismoP();
       ordena(1);
       // executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
-      imprime();
+      // imprime();
       geracao++;
     }
     execucao++;
