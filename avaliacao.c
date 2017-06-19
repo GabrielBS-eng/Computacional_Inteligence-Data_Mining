@@ -26,17 +26,21 @@ typedef struct individuo
     float fitness;
 }individuo;
 
+enum {training, testing};
+
 struct individuo melhores[10];
 struct individuo populacao[50];
 struct individuo populacaoFilhos[50];
 
-void executaBasePopulacao();
+void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting);
 void executaBaseIndividuo();
 void get_database(int total_data[][ATRIBUTES]);
+void setTrainingAndTestingData()
 
 // |-------------------------------------------------------------
 void criaPopulacao(int tamanho);
 void imprime();
+void imprimeIndividuo();
 void crossover(int p1,int p2,int indiceCross);
 void mutacao(int ind);
 void ordena(int popCase);
@@ -65,8 +69,53 @@ int torneio_estocastico(int tour)
     return maior;
 }
 
+void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][ATRIBUTES], int testing_data[][ATRIBUTES])
+{
+  int sorteado[INSTANCES];
+  int i,j,numero;
+  int UmTerco=INSTANCES/3;
+  int DoisTerco=((INSTANCES/3)*2)
 
+  int treino[DoisTerco][atributes],teste[UmTerco][atributes];
 
+  for(i=0;i<INSTANCES;i++)sorteado[i]=0;
+
+  for(i=UmTerco;i<INSTANCES;)//sorteando registros para treinanmento
+  {
+    numero=rand()%INSTANCES;
+    if(sorteado[numero]==0)
+    {
+      sorteado[i]=numero;
+      i++;
+    }
+  }
+
+  for(i=0;i<UmTerco;)//sorteando registros para teste
+  {
+    numero=rand()%INSTANCES;
+    if(sorteado[numero]==0)
+    {
+      sorteado[i]=numero;
+      i++;
+    }
+  }
+
+  for(i=UmTerco;i<INSTANCES;i++)//organizando dados para treino
+  {
+    for(j=0;j<ATRIBUTES;j++)
+    {
+      training_data[i-UmTerco][j] = total_data[sorteado[i]][j]
+    }
+  }
+
+  for(i=0;i<UmTerco;i++)//organizando dados para teste
+  {
+    for(j=0;j<ATRIBUTES;j++)
+    {
+      testing_data[i][j] = total_data[sorteado[i]][j];
+    }
+  }
+}
 
 void ordena(int popCase)
 {
@@ -217,14 +266,19 @@ void imprimeIndividuo(individuo qualquer)
 }
 
 
-void executaBasePopulacao(int total_data[][ATRIBUTES])
+void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting)
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
+    int UmTerco=INSTANCES/3;
   int triggered,p,q,i;
+  int data_limit;
+  if(orTrainingOrTesting == training) data_limit = INSTANCES - UmTerco;
+  if(orTrainingOrTesting == testing) data_limit = UmTerco;
+
   for(i=0; i<50; i++) //Para cada individuo
   {
-    for(p=0; p<INSTANCES; p++) //Comparar com cada registro de caso clínico
+    for(p=0; p<data_limit; p++) //Comparar com cada registro de caso clínico
     {
       triggered = 1;
       for(q=0; (triggered)&&(q<ATRIBUTES-1); q++) //Para cada atributo (sem a classe)
@@ -234,16 +288,16 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
           switch (populacao[i].fita[q].operador) //análise do operador
           {
             case 0:
-              if(!(total_data[p][q] == populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] == populacao[i].fita[q].valor)) triggered=0;
               break;
             case 1:
-              if(!(total_data[p][q] != populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] != populacao[i].fita[q].valor)) triggered=0;
               break;
             case 2:
-              if(!(total_data[p][q] >= populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] >= populacao[i].fita[q].valor)) triggered=0;
               break;
             case 3:
-              if(!(total_data[p][q] < populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] < populacao[i].fita[q].valor)) triggered=0;
               break;
             default:
               break;
@@ -254,12 +308,12 @@ void executaBasePopulacao(int total_data[][ATRIBUTES])
 
       if(triggered) //Análise caso a regra deu certo
       {
-        if(total_data[p][34] == CLASS_TO_ANALISE) Tp++; //Regra cumprida e  classe bateu (Verdadeiro positivo)
+        if(data[p][34] == CLASS_TO_ANALISE) Tp++; //Regra cumprida e  classe bateu (Verdadeiro positivo)
         else Fp++; //Regra cumprida, mas classe não bateu (Falso positivo)
       }
       else //Análise caso a regra foi desobedecida em algum ponto
       {
-        if(total_data[p][34] != CLASS_TO_ANALISE) Tn++; //Regra desobedecida e classe não bateu (Verdadeiro negativo)
+        if(data[p][34] != CLASS_TO_ANALISE) Tn++; //Regra desobedecida e classe não bateu (Verdadeiro negativo)
         else Fn++; //Regra desobedecida, mas classe bateu (Falso negativo)
       }
     }
@@ -312,12 +366,16 @@ int main()
   clock_t begin = clock();
   clock_t end;
   double time_spent;
+  int UmTerco=INSTANCES/3;
   int total_data[INSTANCES][ATRIBUTES];
+  int training_data[INSTANCES - UmTerco][ATRIBUTES]
+  int testing_data[UmTerco][ATRIBUTES]
 
   int geracao,execucao=0;
   int i,indiceCross;
 
-  //Semente do random, através de arquivo de geração do ubuntu, ou
+
+  //Semente do random, através de arquivo de geração do ubuntu, ou com semente fixa, atualizada a cada execucao
   unsigned int semente;
   short gotTheFile = 0;
   FILE *fp;
@@ -334,15 +392,18 @@ int main()
     srand(execucao);
     execucao++;
   }
-  get_database(total_data);
 
+  get_database(total_data);
+  separatingTrainingAndTesting(total_data, training_data, testing_data);
+
+  //Início das execuções
   while(execucao<10)
   {
    // printf("\nEXEC%d: \n", execucao);
       if(!gotTheFile) srand(execucao);
       geracao=0;
       criaPopulacao(50);
-      executaBasePopulacao(total_data); // vai executar a base e calcular o fitness
+      executaBasePopulacao(total_data, training); // vai executar a base e calcular o fitness
       ordena(1);
     while(geracao<50)
     {
@@ -353,7 +414,7 @@ int main()
         crossover(pai1,pai2,indiceCross);
       }
       elitismoP();
-      executaBasePopulacao(total_data);
+      executaBasePopulacao(total_data, training);
       ordena(1);
 //     for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
       geracao++;
