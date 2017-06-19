@@ -403,7 +403,7 @@ int main()
       if(!gotTheFile) srand(execucao);
       geracao=0;
       criaPopulacao(50);
-      executaBasePopulacao(total_data, training); // vai executar a base e calcular o fitness
+      executaBasePopulacao(training_data, training); // vai executar a base e calcular o fitness
       ordena(1);
     while(geracao<50)
     {
@@ -414,7 +414,7 @@ int main()
         crossover(pai1,pai2,indiceCross);
       }
       elitismoP();
-      executaBasePopulacao(total_data, training);
+      executaBasePopulacao(training_data, training);
       ordena(1);
 //     for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
       geracao++;
