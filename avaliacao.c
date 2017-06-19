@@ -10,6 +10,8 @@
 #define CLASS_TO_ANALISE 6
 #define WEIGHT_LIMIT 0.7
 
+#define POPULATION 50
+
 //operador 0 => Igual
 //operador 1 => Diferente
 //operador 2 => Maior ou Igual
@@ -22,17 +24,17 @@ int operador,valor;
 
 typedef struct individuo
 {
-    gene fita[35];
+    gene fita[ATRIBUTES];
     float fitness;
 }individuo;
 
 enum {training, testing};
 
 struct individuo melhores[10];
-struct individuo populacao[50];
-struct individuo populacaoFilhos[50];
+struct individuo populacao[POPULATION];
+struct individuo populacaoFilhos[POPULATION];
 
-void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting);
+void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int populationNumber);
 void executaBaseIndividuo();
 void get_database(int total_data[][ATRIBUTES]);
 void setTrainingAndTestingData()
@@ -266,7 +268,7 @@ void imprimeIndividuo(individuo qualquer)
 }
 
 
-void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting)
+void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int populationNumber)
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
@@ -276,7 +278,7 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting)
   if(orTrainingOrTesting == training) data_limit = INSTANCES - UmTerco;
   if(orTrainingOrTesting == testing) data_limit = UmTerco;
 
-  for(i=0; i<50; i++) //Para cada individuo
+  for(i=0; i<populationNumber; i++) //Para cada individuo
   {
     for(p=0; p<data_limit; p++) //Comparar com cada registro de caso clínico
     {
@@ -402,19 +404,19 @@ int main()
    // printf("\nEXEC%d: \n", execucao);
       if(!gotTheFile) srand(execucao);
       geracao=0;
-      criaPopulacao(50);
-      executaBasePopulacao(training_data, training); // vai executar a base e calcular o fitness
+      criaPopulacao(POPULATION);
+      executaBasePopulacao(training_data, training, POPULATION); // vai executar a base e calcular o fitness
       ordena(1);
-    while(geracao<50)
+    while(geracao<POPULATION)
     {
-      for(indiceCross=0;indiceCross<50;indiceCross+=2)
+      for(indiceCross=0;indiceCross<POPULATION;indiceCross+=2)
       {
         int pai1=torneio_estocastico(3);
         int pai2=torneio_estocastico(3);
         crossover(pai1,pai2,indiceCross);
       }
       elitismoP();
-      executaBasePopulacao(training_data, training);
+      executaBasePopulacao(training_data, training, POPULATION);
       ordena(1);
 //     for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
       geracao++;
