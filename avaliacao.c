@@ -37,7 +37,7 @@ struct individuo populacaoFilhos[POPULATION];
 void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int populationNumber);
 void executaBaseIndividuo();
 void get_database(int total_data[][ATRIBUTES]);
-void setTrainingAndTestingData()
+void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][ATRIBUTES], int testing_data[][ATRIBUTES]);
 
 // |-------------------------------------------------------------
 void criaPopulacao(int tamanho);
@@ -50,16 +50,18 @@ void elitismoP();
 
 int  roleta()
 {
-    int i,maior,vetor[50],sum=0,sorteio;
+    int i,maior,vetor[POPULATION],sum=0,sorteio;
     vetor[0]=populacao[0].fitness*100; //tratar o problema de acumular float
-    for(i=1; i<50; i++)
+    for(i=1; i<POPULATION; i++)
     {
-    if(populacao[i].fitness*100 > 0)
-    vetor[i]=(populacao[i].fitness*100)+vetor[i-1];
-    else vetor[i]=vetor[i-1]+1;
+      if(populacao[i].fitness*100 > 0)
+        vetor[i]=(populacao[i].fitness*100)+vetor[i-1];
+      else
+        vetor[i]=vetor[i-1]+1;
     } //cria um vetor com a fitness acumulado
-    sorteio=rand()%vetor[49];
-    for(i=0; i<50;i++)if(vetor[i]>=sorteio){break;}
+    sorteio=rand()%vetor[POPULATION-1];
+    for(i=0; i<POPULATION;i++)
+      if(vetor[i]>=sorteio){break;}
     return i;
 }
 
@@ -76,11 +78,11 @@ void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][
   int sorteado[INSTANCES];
   int i,j,numero;
   int UmTerco=INSTANCES/3;
-  int DoisTerco=((INSTANCES/3)*2)
+  int DoisTerco=((INSTANCES/3)*2);
 
-  int treino[DoisTerco][atributes],teste[UmTerco][atributes];
+  int treino[DoisTerco][ATRIBUTES], teste[UmTerco][ATRIBUTES];
 
-  for(i=0;i<INSTANCES;i++)sorteado[i]=0;
+  for(i=0;i<INSTANCES;i++) sorteado[i]=0;
 
   for(i=UmTerco;i<INSTANCES;)//sorteando registros para treinanmento
   {
@@ -106,7 +108,7 @@ void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][
   {
     for(j=0;j<ATRIBUTES;j++)
     {
-      training_data[i-UmTerco][j] = total_data[sorteado[i]][j]
+      training_data[i-UmTerco][j] = total_data[sorteado[i]][j];
     }
   }
 
@@ -123,10 +125,10 @@ void ordena(int popCase)
 {
     int i,j,maior;
     individuo aux;
-    for(i=0;i<50;i++)
+    for(i=0;i<POPULATION;i++)
     {
         maior=i;
-        for(j=i;j<50;j++)
+        for(j=i;j<POPULATION;j++)
         {
             if(populacao[j].fitness>populacao[maior].fitness) maior=j;
 
@@ -142,7 +144,7 @@ void criaPopulacao(int tamanho)
     int x=0,i;
     while(x<tamanho)
     {
-        for(i=0;i<35;i++)
+        for(i=0;i<ATRIBUTES;i++)
         {
             //peso de ativacao com 3 casas decimais entre 0 e 1.
             populacao[x].fita[i].peso=(rand()%1000)/1000.0;
@@ -170,9 +172,9 @@ void crossover(int p1,int p2,int indiceCross)
 {
     individuo f1,f2;
     int a,b,i;
-   a=(rand()%35);
-    b=rand()%(35-a);
-    for(i=0;i<35;i++)
+   a=(rand()%ATRIBUTES);
+    b=rand()%(ATRIBUTES-a);
+    for(i=0;i<ATRIBUTES;i++)
     {
         if(i<a)
         {
@@ -202,7 +204,7 @@ void mutacao(int ind)
 {
     int a,i;
 
-    for(i=0;i<34;i++)
+    for(i=0;i<ATRIBUTES-1;i++)
     {
 		//mutacao de 30% em cada campo de todos os individuos gerados
         if(rand()%100<30)
@@ -238,7 +240,7 @@ void mutacao(int ind)
  void elitismoP() // elitismo com apenas o melhor
  {
      int i;
-     for(i=1;i<50;i++)
+     for(i=1;i<POPULATION;i++)
         populacao[i]=populacaoFilhos[i];
  }
 //|-------------------------------------------------------------------------------
@@ -247,7 +249,7 @@ void imprimeIndividuo(individuo qualquer)
 {
     int i;
     if(qualquer.fitness>0){
-    for(i=0;i<35;i++)
+    for(i=0;i<ATRIBUTES;i++)
     {
         if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
         {
@@ -272,7 +274,7 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int po
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
-    int UmTerco=INSTANCES/3;
+  int UmTerco=INSTANCES/3;
   int triggered,p,q,i;
   int data_limit;
   if(orTrainingOrTesting == training) data_limit = INSTANCES - UmTerco;
@@ -370,12 +372,11 @@ int main()
   double time_spent;
   int UmTerco=INSTANCES/3;
   int total_data[INSTANCES][ATRIBUTES];
-  int training_data[INSTANCES - UmTerco][ATRIBUTES]
-  int testing_data[UmTerco][ATRIBUTES]
+  int training_data[INSTANCES - UmTerco][ATRIBUTES];
+  int testing_data[UmTerco][ATRIBUTES];
 
   int geracao,execucao=0;
   int i,indiceCross;
-
 
   //Semente do random, através de arquivo de geração do ubuntu, ou com semente fixa, atualizada a cada execucao
   unsigned int semente;
@@ -396,7 +397,7 @@ int main()
   }
 
   get_database(total_data);
-  separatingTrainingAndTesting(total_data, training_data, testing_data);
+  setTrainingAndTestingData(total_data, training_data, testing_data);
 
   //Início das execuções
   while(execucao<10)
