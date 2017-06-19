@@ -77,8 +77,9 @@ void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][
 {
   int sorteado[INSTANCES];
   int i,j,numero;
-  int UmTerco=INSTANCES/3;
-  int DoisTerco=((INSTANCES/3)*2);
+  int instances = INSTANCES;
+  int UmTerco= instances/3;
+  int DoisTerco=((instances/3)*2);
 
   int treino[DoisTerco][ATRIBUTES], teste[UmTerco][ATRIBUTES];
 
@@ -86,7 +87,7 @@ void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][
 
   for(i=UmTerco;i<INSTANCES;)//sorteando registros para treinanmento
   {
-    numero=rand()%INSTANCES;
+    numero=rand()%instances;
     if(sorteado[numero]==0)
     {
       sorteado[i]=numero;
@@ -96,7 +97,7 @@ void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][
 
   for(i=0;i<UmTerco;)//sorteando registros para teste
   {
-    numero=rand()%INSTANCES;
+    numero=rand()%instances;
     if(sorteado[numero]==0)
     {
       sorteado[i]=numero;
@@ -274,10 +275,11 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int po
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
-  int UmTerco=INSTANCES/3;
+  int instances = INSTANCES;
+  int UmTerco= instances/3;
   int triggered,p,q,i;
   int data_limit;
-  if(orTrainingOrTesting == training) data_limit = INSTANCES - UmTerco;
+  if(orTrainingOrTesting == training) data_limit = instances - UmTerco;
   if(orTrainingOrTesting == testing) data_limit = UmTerco;
 
   for(i=0; i<populationNumber; i++) //Para cada individuo
@@ -370,9 +372,10 @@ int main()
   clock_t begin = clock();
   clock_t end;
   double time_spent;
-  int UmTerco=INSTANCES/3;
+  int instances = INSTANCES;
+  int UmTerco= instances/3;
   int total_data[INSTANCES][ATRIBUTES];
-  int training_data[INSTANCES - UmTerco][ATRIBUTES];
+  int training_data[instances - UmTerco][ATRIBUTES];
   int testing_data[UmTerco][ATRIBUTES];
 
   int geracao,execucao=0;
