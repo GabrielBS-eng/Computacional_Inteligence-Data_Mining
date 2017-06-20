@@ -390,7 +390,7 @@ int main()
   {
     gotTheFile = 1;
     fread(&semente, sizeof(unsigned int), 1, fp);
-    srand(semente);
+    // srand(semente);
     fclose(fp);
   }
   else
