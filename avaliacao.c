@@ -34,7 +34,7 @@ struct individuo melhores[10];
 struct individuo populacao[POPULATION];
 struct individuo populacaoFilhos[POPULATION];
 
-void executaBasePopulacao(int data[][ATRIBUTES], individuo toExecute, int orTrainingOrTesting, int populationNumber);
+void executaBasePopulacao(int data[][ATRIBUTES], individuo toExecute[], int orTrainingOrTesting, int populationNumber);
 void executaBaseIndividuo();
 void get_database(int total_data[][ATRIBUTES]);
 void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][ATRIBUTES], int testing_data[][ATRIBUTES]);
