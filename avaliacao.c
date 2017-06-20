@@ -34,7 +34,7 @@ struct individuo melhores[10];
 struct individuo populacao[POPULATION];
 struct individuo populacaoFilhos[POPULATION];
 
-void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int populationNumber);
+void executaBasePopulacao(int data[][ATRIBUTES], individuo toExecute, int orTrainingOrTesting, int populationNumber);
 void executaBaseIndividuo();
 void get_database(int total_data[][ATRIBUTES]);
 void setTrainingAndTestingData(int total_data[][ATRIBUTES], int training_data[][ATRIBUTES], int testing_data[][ATRIBUTES]);
@@ -249,29 +249,30 @@ void mutacao(int ind)
 void imprimeIndividuo(individuo qualquer)
 {
     int i;
-    if(qualquer.fitness>0){
-    for(i=0;i<ATRIBUTES;i++)
+    if(qualquer.fitness>0)
     {
-        if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
-        {
-        // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
-        printf("g%d ",i); //indica o gene.
-        if(qualquer.fita[i].operador==0)
-            printf("== %d ",qualquer.fita[i].valor);
-        if(qualquer.fita[i].operador==1)
-            printf("!= %d ",qualquer.fita[i].valor);
-        if(qualquer.fita[i].operador==2)
-            printf(">= %d ",qualquer.fita[i].valor);
-        if(qualquer.fita[i].operador==3)
-            printf("< %d ",qualquer.fita[i].valor);
-        }
-    }
-  printf("<%f>\n", qualquer.fitness);
+      for(i=0;i<ATRIBUTES;i++)
+      {
+          if(qualquer.fita[i].peso >= WEIGHT_LIMIT) // apenas os pesos menos que 0.3 ativam, se quiser pode ser >0.7 | de qualquer jeito passao 30%
+          {
+          // printf("- %.3f",populacao[x].fita[i].peso); // se quiser ver o peso
+          printf("g%d ",i); //indica o gene.
+          if(qualquer.fita[i].operador==0)
+              printf("== %d ",qualquer.fita[i].valor);
+          if(qualquer.fita[i].operador==1)
+              printf("!= %d ",qualquer.fita[i].valor);
+          if(qualquer.fita[i].operador==2)
+              printf(">= %d ",qualquer.fita[i].valor);
+          if(qualquer.fita[i].operador==3)
+              printf("< %d ",qualquer.fita[i].valor);
+          }
+      }
+      printf("<%f>\n", qualquer.fitness);
     }
 }
 
 
-void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int populationNumber)
+void executaBasePopulacao(int data[][ATRIBUTES], individuo toExecute[], int orTrainingOrTesting, int populationNumber)
 {
   int Tp = 0, Fp = 0, Tn = 0, Fn = 0;
   float Se, Sp;
@@ -289,21 +290,21 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int po
       triggered = 1;
       for(q=0; (triggered)&&(q<ATRIBUTES-1); q++) //Para cada atributo (sem a classe)
       {
-        if(populacao[i].fita[q].peso > WEIGHT_LIMIT) //O peso é maior que o limite
+        if(toExecute[i].fita[q].peso > WEIGHT_LIMIT) //O peso é maior que o limite
         {
-          switch (populacao[i].fita[q].operador) //análise do operador
+          switch (toExecute[i].fita[q].operador) //análise do operador
           {
             case 0:
-              if(!(data[p][q] == populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] == toExecute[i].fita[q].valor)) triggered=0;
               break;
             case 1:
-              if(!(data[p][q] != populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] != toExecute[i].fita[q].valor)) triggered=0;
               break;
             case 2:
-              if(!(data[p][q] >= populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] >= toExecute[i].fita[q].valor)) triggered=0;
               break;
             case 3:
-              if(!(data[p][q] < populacao[i].fita[q].valor)) triggered=0;
+              if(!(data[p][q] < toExecute[i].fita[q].valor)) triggered=0;
               break;
             default:
               break;
@@ -325,7 +326,7 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int po
     }
     Se = (Tp/(Tp+Fn*1.0));
     Sp = (Tn/(Tn+Fp*1.0));
-    populacao[i].fitness = Se*Sp;
+    toExecute[i].fitness = Se*Sp;
     Tp = 0; //para começar a análise da próxima regra (indivíduo)
     Fp = 0; //para começar a análise da próxima regra (indivíduo)
     Tn = 0; //para começar a análise da próxima regra (indivíduo)
@@ -333,10 +334,9 @@ void executaBasePopulacao(int data[][ATRIBUTES], int orTrainingOrTesting, int po
   }
 }
 
-void executaBaseIndividuo()
-{
-
-}
+// void executaBaseIndividuo()
+// {
+// }
 
 void get_database(int total_data[][ATRIBUTES]) //coleta dos dados do arquivo
 {
@@ -409,7 +409,9 @@ int main()
       if(!gotTheFile) srand(execucao);
       geracao=0;
       criaPopulacao(POPULATION);
-      executaBasePopulacao(training_data, training, POPULATION); // vai executar a base e calcular o fitness
+
+// ######################################TRAINING#######################################################
+      executaBasePopulacao(training_data, populacao, training, POPULATION); // vai executar a base e calcular o fitness
       ordena(1);
     while(geracao<POPULATION)
     {
@@ -420,19 +422,25 @@ int main()
         crossover(pai1,pai2,indiceCross);
       }
       elitismoP();
-      executaBasePopulacao(training_data, training, POPULATION);
+      executaBasePopulacao(training_data, populacao, training, POPULATION);
       ordena(1);
-//     for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
+    // for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
       geracao++;
 
     }
-    //for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
+    // for(i=0;i<50;i++){imprimeIndividuo(populacao[i]);}
     melhores[execucao]=populacao[0];// parte 4 do trabalho
     execucao++;
   }
 
   printf("melhores:\n");
   for(i=0;i<10;i++)imprimeIndividuo(melhores[i]);
+
+// #####################################TESTING#########################################################
+  executaBasePopulacao(testing_data, melhores, testing, 10);
+  printf("melhores após o training:\n");
+  for(i=0;i<10;i++)imprimeIndividuo(melhores[i]);
+// #####################################################################################################
   end = clock();
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("\n\nTime: %lf\n",time_spent);
